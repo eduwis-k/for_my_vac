@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세특 작성 지원 시스템</title>
+    <style>
+        :root {
+            --primary: #4c6ef5;
+            --primary-hover: #3b5bdb;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #343a40;
+            --text-muted: #868e96;
+            --border: #dee2e6;
+            --success: #40c057;
+        }
+        * { box-sizing: border-box; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
+        body { margin: 0; background-color: var(--bg); color: var(--text-main); line-height: 1.6; }
+        
+        header { background-color: var(--primary); padding: 1rem 2rem; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; font-size: 1.4rem; }
+        .nav-btns button { background: rgba(255,255,255,0.2); border: none; padding: 8px 16px; color: white; border-radius: 6px; cursor: pointer; margin-left: 8px; font-weight: bold; transition: all 0.2s; }
+        .nav-btns button:hover { background: rgba(255,255,255,0.3); }
+        .nav-btns button.active { background: white; color: var(--primary); }
+        
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        
+        h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-size: 1.3rem; }
+        h3 { color: #495057; font-size: 1.1rem; margin-top: 0; }
+        
+        .student-form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 768px) {
+            .student-form-grid { grid-template-columns: 1fr 1fr; }
+            .full-width { grid-column: 1 / -1; }
+        }
+        .student-form-grid .form-group { margin-bottom: 0; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 0.5rem; color: #495057; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 0.5rem; margin-top: 0.2rem; }
+        .star-rating input { display: none; }
+        .star-rating label { font-size: 2rem; color: #dee2e6; cursor: pointer; transition: color 0.2s; margin: 0; line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #fcc419; }
+        
+        button.btn-primary { background-color: var(--primary); color: white; border: none; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: background-color 0.2s; }
+        button.btn-primary:hover { background-color: var(--primary-hover); }
+        
+        button.btn-secondary { background-color: #f1f3f5; color: #495057; border: 1px solid #ced4da; padding: 0.8rem 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        button.btn-secondary:hover { background-color: #e9ecef; }
+
+        .hidden { display: none !important; }
+        
+        .admin-controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .admin-controls select { padding: 0.8rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 8px; flex: 1; }
+        
+        .submission-item { border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; background-color: #f8f9fa; }
+        .submission-header { font-weight: bold; margin-bottom: 1rem; display: flex; justify-content: space-between; color: var(--primary); border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; }
+        .checkbox-group { display: flex; flex-direction: column; gap: 0.8rem; }
+        .checkbox-group label { display: flex; align-items: flex-start; gap: 0.8rem; font-weight: normal; margin:0; cursor: pointer; background: white; padding: 0.8rem; border-radius: 6px; border: 1px solid #e9ecef; transition: background 0.2s; }
+        .checkbox-group label:hover { background: #f1f3f5; }
+        .checkbox-group input[type="checkbox"] { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+        
+        .competency-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem; }
+        .competency-grid label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; background: #f8f9fa; padding: 0.8rem; border-radius: 6px; border: 1px solid #e9ecef; transition: background 0.2s; }
+        .competency-grid label:hover { background: #e9ecef; }
+        .competency-grid input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+        
+        .prompt-preview { background-color: #f1f3f5; border: 1px solid #dee2e6; padding: 1.5rem; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem; min-height: 150px; color: #343a40; }
+        
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(52, 58, 64, 0.9); color: white; padding: 12px 24px; border-radius: 30px; font-size: 1rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; font-weight: bold; }
+        .toast.show { opacity: 1; }
+
+        .sos-item { border: 1px solid #ffc9c9; background: white; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid #e03131; }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; gap: 1rem; padding: 1rem; }
+            .nav-btns { display: flex; width: 100%; }
+            .nav-btns button { flex: 1; margin: 0 4px; }
+            .nav-btns button:first-child { margin-left: 0; }
+            .nav-btns button:last-child { margin-right: 0; }
+            .competency-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>세특 작성 지원 시스템</h1>
+        <div class="nav-btns">
+            <button id="tab-student" class="active" onclick="switchTab('student')">학생 모드</button>
+            <button id="tab-admin" onclick="switchTab('admin')">관리자 모드</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Student Mode View -->
+        <div id="view-student" class="view">
+            <div class="card">
+                <h2>학습 내용 및 활동 기록</h2>
+                <div class="student-form-grid">
+                    <div class="form-group">
+                        <label for="student-name">학번 및 이름 *</label>
+                        <input type="text" id="student-name" placeholder="예: 10101 홍길동">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-session">차시 또는 주제 *</label>
+                        <select id="student-session">
+                            <option value="1차시">1차시</option>
+                            <option value="2차시">2차시</option>
+                            <option value="3차시">3차시</option>
+                            <option value="4차시">4차시</option>
+                            <option value="5차시">5차시</option>
+                            <option value="6차시">6차시</option>
+                            <option value="7차시">7차시</option>
+                            <option value="8차시">8차시</option>
+                            <option value="9차시">9차시</option>
+                            <option value="10차시">10차시</option>
+                            <option value="기타">기타 활동</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>수업 이해도 별점 *</label>
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5점">★</label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4점">★</label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3점">★</label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2점">★</label>
+                            <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1점">★</label>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="student-summary">오늘 배운 내용 요약 *</label>
+                        <textarea id="student-summary" placeholder="오늘 수업에서 배운 핵심 내용을 요약해주세요."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-activity">자신의 활동/역할 (선택)</label>
+                        <textarea id="student-activity" placeholder="수업 중 본인이 수행한 활동이나 역할을 구체적으로 적어주세요."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-reflection">느낀 점 또는 더 알고 싶은 점 (선택)</label>
+                        <textarea id="student-reflection" placeholder="활동을 통해 느낀 점이나 앞으로 더 탐구하고 싶은 점을 적어주세요."></textarea>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="submitStudentForm()">기록 제출하기</button>
+            </div>
+            
+            <div class="card" style="margin-top: 1.5rem; text-align: center; background-color: #fff5f5; border: 1px solid #ffc9c9;">
+                <h3 style="color: #e03131; margin-top: 0;">도움이 필요하신가요?</h3>
+                <p style="color: #495057; font-size: 0.9rem;">질문할 내용이나 안되는 부분을 간단히 적고 SOS 버튼을 누르세요.<br>(위 입력칸에 학번/이름을 먼저 입력해주세요)</p>
+                <div class="form-group" style="text-align: left; max-width: 400px; margin: 0 auto 1rem auto;">
+                    <input type="text" id="sos-message" placeholder="예: 3번 문제 이해가 안 가요 / 다음 버튼이 안 눌려요" onkeypress="if(event.key === 'Enter') requestSOS()">
+                </div>
+                <button class="btn-primary" style="background-color: #e03131; max-width: 200px; margin: 0 auto;" onclick="requestSOS()">SOS</button>
+            </div>
+        </div>
+
+        <!-- Admin Login View -->
+        <div id="view-admin-login" class="view hidden">
+            <div class="card" style="max-width: 400px; margin: 0 auto;">
+                <h2>관리자 인증</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">관리자 모드에 접근하려면 비밀번호를 입력하세요. (기본: teacher123)</p>
+                <div class="form-group">
+                    <input type="password" id="admin-password" placeholder="비밀번호 입력" onkeypress="if(event.key === 'Enter') loginAdmin()">
+                </div>
+                <button class="btn-primary" onclick="loginAdmin()">로그인</button>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard View -->
+        <div id="view-admin-dashboard" class="view hidden">
+            <div class="card" id="sos-panel" style="border: 2px solid #e03131; background-color: #fff5f5; margin-bottom: 2rem;">
+                <h2 style="color: #e03131; border-bottom: 2px solid #ffc9c9; margin-bottom: 1rem; padding-bottom: 0.5rem; font-size: 1.3rem; margin-top: 0;">🚨 실시간 질문/도움 요청 현황</h2>
+                <div id="sos-list">
+                    <p style="color: #868e96; text-align: center; margin: 1rem 0;">현재 접수된 요청이 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>학생 응답 조회</h2>
+                <div class="admin-controls">
+                    <select id="filter-student" onchange="renderStudentRecords()">
+                        <option value="">학생을 선택하세요</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="student-record-area" class="hidden">
+                <div class="card">
+                    <h2>선택된 학생 활동 기록</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">세특에 포함할 항목을 체크하세요.</p>
+                    <div id="submissions-list">
+                        <!-- JS will populate -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>교사 관찰 기록</h2>
+                    <div class="form-group">
+                        <textarea id="teacher-observation" placeholder="학생에 대한 교사의 관찰 내용이나 평가를 자유롭게 입력하세요. 이 내용은 프롬프트에 반영됩니다."></textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>강조할 역량 선택 (선택 사항)</h2>
+                    <div class="competency-grid" id="competency-list">
+                        <!-- JS will populate -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <button class="btn-primary" onclick="generatePrompt()">세특 작성용 프롬프트 만들기</button>
+                    
+                    <div id="prompt-result-area" class="hidden" style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+                        <h3>생성된 프롬프트</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">아래 텍스트를 복사하여 ChatGPT, Gemini, Claude 등 무료 AI 챗봇에 붙여넣으세요.</p>
+                        <div id="prompt-preview" class="prompt-preview"></div>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 2rem;" onclick="copyPrompt()">프롬프트 복사하기</button>
+                        
+                        <h3>AI가 생성한 결과 붙여넣기</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">AI 챗봇에서 생성된 세특을 아래에 붙여넣고 필요에 따라 다듬으세요.</p>
+                        <div class="form-group">
+                            <textarea id="final-sera" placeholder="여기에 최종 세특 문안을 작성/붙여넣기 하세요..." style="min-height: 150px; font-size: 1.05rem;" oninput="updateByteCount()"></textarea>
+                            <div id="byte-counter" style="text-align: right; color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem; font-weight: bold;">현재: 0 바이트</div>
+                        </div>
+                        <button class="btn-primary" style="background-color: var(--success);" onclick="saveFinalSera()">최종 세특 저장하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">메시지</div>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { 
+        getFirestore, collection, addDoc, updateDoc, doc, getDocs, query, where, onSnapshot, orderBy, serverTimestamp, setDoc, getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDetJ32l5yoGQrHSImjUDdZbT9uraQQf2U",
+    authDomain: "for-my-vacation.firebaseapp.com",
+    projectId: "for-my-vacation",
+    storageBucket: "for-my-vacation.firebasestorage.app",
+    messagingSenderId: "857338456451",
+    appId: "1:857338456451:web:b6a3640b5cec4005dbaeb6",
+    measurementId: "G-GT59RVGPKJ"
+  };
+
+    let app, db;
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+    } catch (e) {
+        console.warn("Firebase 초기화 대기 중 (설정값을 확인하세요):", e);
+    }
+
+    // --- Data & State ---
+    window.isAdminLoggedIn = false;
+    let unsubRecords = null;
+    let unsubSos = null;
+    let currentAdminRecords = [];
+    
+    const competencies = [
+        "자기주도적 학습 태도",
+        "문제 해결력",
+        "인문학적 소양",
+        "탐구적 태도",
+        "창의적 사고력",
+        "협업 및 공동체 역량",
+        "의사소통 능력"
+    ];
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initCompetencies();
+        window.switchTab('student');
+    });
+
+    function initCompetencies() {
+        const container = document.getElementById('competency-list');
+        competencies.forEach(comp => {
+            const label = document.createElement('label');
+            label.innerHTML = `<input type="checkbox" class="chk-comp" value="${comp}"> <span>${comp}</span>`;
+            container.appendChild(label);
+        });
+    }
+
+    // --- Navigation ---
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.nav-btns button').forEach(el => el.classList.remove('active'));
+        
+        if (tab === 'student') {
+            document.getElementById('view-student').classList.remove('hidden');
+            document.getElementById('tab-student').classList.add('active');
+            if (unsubRecords) { unsubRecords(); unsubRecords = null; }
+            if (unsubSos) { unsubSos(); unsubSos = null; }
+        } else if (tab === 'admin') {
+            document.getElementById('tab-admin').classList.add('active');
+            if (window.isAdminLoggedIn) {
+                document.getElementById('view-admin-dashboard').classList.remove('hidden');
+                startAdminRealtimeSync();
+            } else {
+                document.getElementById('view-admin-login').classList.remove('hidden');
+            }
+        }
+    };
+
+    // --- Student Mode Logic ---
+    window.submitStudentForm = async function() {
+        if (!db) { window.showToast("Firebase가 설정되지 않았습니다. 코드를 확인하세요."); return; }
+        
+        const name = document.getElementById('student-name').value.trim();
+        const session = document.getElementById('student-session').value;
+        const summary = document.getElementById('student-summary').value.trim();
+        const activity = document.getElementById('student-activity').value.trim();
+        const reflection = document.getElementById('student-reflection').value.trim();
+        const ratingEl = document.querySelector('input[name="rating"]:checked');
+        const rating = ratingEl ? parseInt(ratingEl.value) : 0;
+
+        if (!name || !summary || !rating) {
+            window.showToast("학번 및 이름, 수업 이해도, 오늘 배운 내용 요약을 모두 입력/선택해주세요.");
+            return;
+        }
+
+        try {
+            const q = query(collection(db, "students_records"), where("studentName", "==", name), where("session", "==", session));
+            const querySnapshot = await getDocs(q);
+            
+            const payload = {
+                studentName: name,
+                session: session,
+                rating: rating,
+                summary: summary,
+                activity: activity,
+                reflection: reflection,
+                submittedAt: new Date().toISOString()
+            };
+
+            if (!querySnapshot.empty) {
+                if (!confirm(`'${name}' 학생의 '${session}' 기록이 이미 존재합니다. 덮어쓰시겠습니까?`)) {
+                    return;
+                }
+                const docId = querySnapshot.docs[0].id;
+                await updateDoc(doc(db, "students_records", docId), payload);
+            } else {
+                await addDoc(collection(db, "students_records"), payload);
+            }
+
+            document.getElementById('student-summary').value = '';
+            document.getElementById('student-activity').value = '';
+            document.getElementById('student-reflection').value = '';
+            if (ratingEl) ratingEl.checked = false;
+            
+            window.showToast("제출이 완료되었습니다.");
+        } catch (e) {
+            console.error(e);
+            window.showToast("제출 중 오류가 발생했습니다.");
+        }
+    };
+
+    window.requestSOS = async function() {
+        if (!db) { window.showToast("Firebase가 설정되지 않았습니다. 코드를 확인하세요."); return; }
+        const name = document.getElementById('student-name').value.trim();
+        const message = document.getElementById('sos-message').value.trim();
+        
+        if (!name) {
+            window.showToast("SOS를 요청하려면 먼저 '학번 및 이름'을 입력해주세요.");
+            return;
+        }
+        if (!message) {
+            window.showToast("질문할 내용이나 안되는 부분을 간단히 적어주세요.");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "sos_requests"), {
+                studentName: name,
+                message: message,
+                requestedAt: new Date().toISOString(),
+                resolved: false
+            });
+            document.getElementById('sos-message').value = '';
+            window.showToast("선생님께 SOS 요청을 보냈습니다.");
+        } catch (e) {
+            console.error(e);
+            window.showToast("SOS 요청 중 오류가 발생했습니다.");
+        }
+    };
+
+    // --- Admin Login Logic ---
+    window.loginAdmin = function() {
+        const pw = document.getElementById('admin-password').value;
+        if (pw === 'teacher123') {
+            window.isAdminLoggedIn = true;
+            document.getElementById('admin-password').value = '';
+            window.switchTab('admin');
+        } else {
+            window.showToast("비밀번호가 틀렸습니다.");
+        }
+    };
+
+    // --- Admin Dashboard Logic ---
+    function startAdminRealtimeSync() {
+        if (!db) return;
+
+        const qSos = query(collection(db, "sos_requests"), where("resolved", "==", false), orderBy("requestedAt", "asc"));
+        unsubSos = onSnapshot(qSos, (snapshot) => {
+            const sosList = document.getElementById('sos-list');
+            sosList.innerHTML = '';
+            if (snapshot.empty) {
+                sosList.innerHTML = '<p style="color: #868e96; text-align: center; margin: 1rem 0;">현재 접수된 요청이 없습니다.</p>';
+            } else {
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const d = new Date(data.requestedAt);
+                    const timeStr = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute:'2-digit' });
+                    
+                    const item = document.createElement('div');
+                    item.className = 'sos-item';
+                    const safeMessage = data.message ? data.message.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '내용 없음';
+                    item.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <div><strong style="font-size:1.1rem;">${data.studentName}</strong> 학생 <span style="color:#868e96; font-size:0.9rem; margin-left: 0.5rem;">(${timeStr})</span></div>
+                                <div style="margin-top: 0.5rem; padding: 0.8rem; background: #fff; border: 1px solid #ffe3e3; border-radius: 6px; color: #495057; font-size: 0.95rem;">
+                                    ${safeMessage}
+                                </div>
+                            </div>
+                            <button class="btn-secondary" style="background-color: #40c057; color: white; border: none; padding: 0.5rem 1rem; margin-top: 0.2rem; white-space: nowrap;" onclick="resolveSOS('${docSnap.id}')">해결 완료</button>
+                        </div>
+                    `;
+                    sosList.appendChild(item);
+                });
+            }
+        });
+
+        const qRecords = query(collection(db, "students_records"), orderBy("submittedAt", "desc"));
+        unsubRecords = onSnapshot(qRecords, (snapshot) => {
+            const records = [];
+            const studentsSet = new Set();
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                data.id = docSnap.id;
+                records.push(data);
+                studentsSet.add(data.studentName);
+            });
+            
+            currentAdminRecords = records;
+            const students = Array.from(studentsSet).sort();
+            
+            const select = document.getElementById('filter-student');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">학생을 선택하세요</option>';
+            students.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
+            
+            if(students.includes(currentValue)) {
+                select.value = currentValue;
+                window.renderStudentRecords(); 
+            } else {
+                document.getElementById('student-record-area').classList.add('hidden');
+            }
+        });
+    }
+
+    window.resolveSOS = async function(docId) {
+        if (!db) return;
+        try {
+            await updateDoc(doc(db, "sos_requests", docId), {
+                resolved: true
+            });
+            window.showToast("SOS 요청이 해결 처리되었습니다.");
+        } catch (e) {
+            console.error(e);
+            window.showToast("처리 중 오류가 발생했습니다.");
+        }
+    };
+
+    window.renderStudentRecords = async function() {
+        const studentName = document.getElementById('filter-student').value;
+        if (!studentName) {
+            document.getElementById('student-record-area').classList.add('hidden');
+            return;
+        }
+        
+        document.getElementById('student-record-area').classList.remove('hidden');
+        document.getElementById('prompt-result-area').classList.add('hidden');
+        document.getElementById('teacher-observation').value = '';
+        document.querySelectorAll('.chk-comp').forEach(el => el.checked = false);
+        
+        const studentSubs = currentAdminRecords.filter(s => s.studentName === studentName).sort((a,b) => {
+            return a.session.localeCompare(b.session) || new Date(a.submittedAt) - new Date(b.submittedAt);
+        });
+        
+        const container = document.getElementById('submissions-list');
+        container.innerHTML = '';
+        
+        studentSubs.forEach(sub => {
+            const dateObj = new Date(sub.submittedAt);
+            const dateStr = dateObj.toLocaleDateString('ko-KR') + ' ' + dateObj.toLocaleTimeString('ko-KR', { hour: '2-digit', minute:'2-digit' });
+            const item = document.createElement('div');
+            item.className = 'submission-item';
+            item.innerHTML = `
+                <div class="submission-header">
+                    <span>${sub.session}</span>
+                    <span style="font-size: 0.85rem; color: #868e96; font-weight: normal;">제출일: ${dateStr}</span>
+                </div>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" class="chk-entry" value="[${sub.session} 수업 이해도] 5점 만점에 ${sub.rating || 0}점" checked>
+                        <div><strong>수업 이해도:</strong> <span style="color:#fcc419; font-size:1.1rem; line-height:1;">${'★'.repeat(sub.rating || 0)}${'☆'.repeat(5-(sub.rating || 0))}</span> <span style="color:#868e96; font-size:0.9rem;">(${sub.rating || 0}점)</span></div>
+                    </label>
+                    <label>
+                        <input type="checkbox" class="chk-entry" value="[${sub.session} 요약] ${sub.summary}">
+                        <div><strong>배운 내용 요약:</strong> <span style="color:#495057;">${sub.summary}</span></div>
+                    </label>
+                    ${sub.activity ? `
+                    <label>
+                        <input type="checkbox" class="chk-entry" value="[${sub.session} 활동] ${sub.activity}">
+                        <div><strong>활동 및 역할:</strong> <span style="color:#495057;">${sub.activity}</span></div>
+                    </label>
+                    ` : ''}
+                    ${sub.reflection ? `
+                    <label>
+                        <input type="checkbox" class="chk-entry" value="[${sub.session} 느낀 점] ${sub.reflection}">
+                        <div><strong>느낀 점:</strong> <span style="color:#495057;">${sub.reflection}</span></div>
+                    </label>
+                    ` : ''}
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        if (db) {
+            try {
+                const docRef = doc(db, "final_sera_records", studentName);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    document.getElementById('final-sera').value = docSnap.data().content || '';
+                } else {
+                    document.getElementById('final-sera').value = '';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        window.updateByteCount();
+    };
+
+    window.generatePrompt = function() {
+        const checkedEntries = Array.from(document.querySelectorAll('.chk-entry:checked')).map(el => el.value);
+        const observation = document.getElementById('teacher-observation').value.trim();
+        const checkedComps = Array.from(document.querySelectorAll('.chk-comp:checked')).map(el => el.value);
+        
+        if (checkedEntries.length === 0 && !observation) {
+            window.showToast("선택된 학생 활동 기록이나 교사 관찰 내용이 없습니다.");
+            return;
+        }
+
+        let entriesText = checkedEntries.length > 0 ? checkedEntries.map(e => "- " + e).join('\n') : "선택된 활동 내용 없음";
+        let observationText = observation ? observation : "추가 관찰 내용 없음";
+        let compsText = checkedComps.length > 0 ? checkedComps.join(', ') : "지정하지 않음 (자연스럽게 유추할 것)";
+        
+        const prompt = `당신은 한국 고등학교 교사가 학생생활기록부의 "세부능력 및 특기사항(세특)"을 작성하는 것을 돕는 도우미입니다.
+아래 정보를 바탕으로 해당 학생의 세특 문구를 작성하세요.
+
+[학생이 기록한 활동 내용]
+${entriesText}
+
+[교사 관찰 내용]
+${observationText}
+
+[강조하고 싶은 역량]
+${compsText}
+
+작성 규칙:
+- 문어체, 서술형 문장으로 작성하고 "~함", "~보임", "~수행함" 등 나이스(NEIS) 학교생활기록부 기재 요령에 맞는 관찰기록 문체를 사용할 것
+- 학생 이름이나 "이 학생은", "학생은" 같은 주어를 반복하지 말고 자연스럽게 이어지는 하나의 문단으로 작성할 것
+- 근거 없는 내용을 지어내지 말고, 제공된 학생 활동과 교사 관찰 내용에 기반해서만 작성할 것
+- 선택된 역량이 있다면 해당 역량이 드러나도록 자연스럽게 녹여 쓰되, 역량 단어를 억지로 나열하지 말 것
+- 학생의 수업 이해도(별점)가 포함된 경우, 이를 바탕으로 학생의 학업 성취 수준을 문장에 자연스럽게 반영할 것
+- 분량은 3~5문장 내외로 간결하고 명확하게 작성할 것`;
+
+        document.getElementById('prompt-preview').textContent = prompt;
+        document.getElementById('prompt-result-area').classList.remove('hidden');
+        
+        setTimeout(() => {
+            document.getElementById('prompt-result-area').scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    };
+
+    window.copyPrompt = function() {
+        const text = document.getElementById('prompt-preview').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            window.showToast("클립보드에 복사되었습니다.");
+        }).catch(err => {
+            window.showToast("복사에 실패했습니다. 수동으로 복사해주세요.");
+        });
+    };
+
+    window.saveFinalSera = async function() {
+        const studentName = document.getElementById('filter-student').value;
+        const finalSera = document.getElementById('final-sera').value.trim();
+        
+        if (!studentName || !db) return;
+        
+        try {
+            await setDoc(doc(db, "final_sera_records", studentName), {
+                content: finalSera,
+                updatedAt: new Date().toISOString()
+            });
+            window.showToast(`'${studentName}' 학생의 세특이 저장되었습니다.`);
+        } catch (e) {
+            console.error(e);
+            window.showToast("저장 중 오류가 발생했습니다.");
+        }
+    };
+
+    window.updateByteCount = function() {
+        const text = document.getElementById('final-sera').value;
+        let byteCount = 0;
+        const normalizedText = text.replace(/\r\n/g, '\n');
+        for (let i = 0; i < normalizedText.length; i++) {
+            const charCode = normalizedText.charCodeAt(i);
+            if (charCode === 10) { 
+                byteCount += 2;
+            } else if (charCode <= 127) {
+                byteCount += 1;
+            } else {
+                byteCount += 3;
+            }
+        }
+        document.getElementById('byte-counter').textContent = `현재: ${byteCount} 바이트`;
+    };
+
+    window.showToast = function(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    };
+</script>
+
+</body>
+</html>
